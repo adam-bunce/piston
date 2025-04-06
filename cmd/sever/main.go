@@ -33,16 +33,23 @@ func handleClient(c net.Conn) {
 		switch packet.ID(packetId) {
 		case packet.KeepAlive:
 		case packet.Handshake:
-			c.Write([]byte{2, 0, 1, 0, '-'})
+			p := packet.New(
+				packet.WithID(packet.Handshake),
+				packet.WithString16("-"),
+			)
+
+			c.Write(p.Body)
+
 			fmt.Println("wrote bytes")
 		case packet.LoginRequest:
-			// player id 4 bytes
-			// Unknown string 16 (wtf does this mean ? always empty?)
-			// map seed (not used by client, shouldnt send if i gaf about sec)
-			// dimension // (
-			// 4 + 2 + 8 + 1
-			//                                 |   player id(4)    |  unk(2 + strlen) | map seed (8)             | dim
-			c.Write([]byte{packet.LoginRequest, 0, 0, 0, 1, 0, 0, 1, 2, 3, 5, 5, 6, 7, 8, 0})
+			p := packet.New(
+				packet.WithID(packet.LoginRequest),
+				packet.WithInt4(1),
+				packet.WithString16(""),
+				packet.WithLong(22),
+				packet.WithByte(0),
+			)
+			c.Write(p.Body)
 		case packet.PlayerPosition:
 		case packet.PlayerLook:
 		case packet.PlayerPositionAndLook:

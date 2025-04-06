@@ -1,10 +1,12 @@
 package packet
 
-type Packet interface {
-	Type()
-	Size() uint64
-	Serialize() []byte
-}
+import "encoding/binary"
+
+//type Packet interface {
+//	Type()
+//	Size() uint64
+//	Serialize() []byte
+//}
 
 /*
 for server bound packet parsing I need to read
@@ -44,15 +46,58 @@ p := packet.newPacket(
 
 // something similar to 8086_sim to convert bytes to usable objects would be good
 // except packet id give it away so easier
-
-//  i need a way to handle the creation of packets easily
-// so might as well make builder to abstract away difficulty of
-// doing little endian utf16 conversion
-// with string
-// with long
-// with int
-// with byte
-// with bytes([]byte) that just gets dumped
-// with normalBytes (we do conversion to utf16 or whateva? )
+// describe packet shape, get out packet struct (or map? idk)
 
 // GOAL 1: two users connect, can send chat messages (no blocks or anything else)
+
+type Packet struct {
+	Body []byte
+}
+
+func New(options ...func(*Packet)) *Packet {
+	packet := &Packet{Body: []byte{}}
+	for _, function := range options {
+		function(packet)
+	}
+
+	return packet
+}
+
+// WithByte writes the given byte end of the packet
+func WithByte(b byte) func(*Packet) {
+	return func(p *Packet) {
+		p.Body = append(p.Body, b)
+	}
+}
+
+// WithID writes the given byte to the first position in the packet
+func WithID(id byte) func(*Packet) {
+	return func(p *Packet) {
+		if len(p.Body) == 0 {
+			p.Body = make([]byte, 1)
+		}
+		p.Body[0] = id
+	}
+}
+
+// WithString16 writes s as 2 + len(s) bytes to the packet
+func WithString16(s string) func(*Packet) {
+	return func(p *Packet) {
+		p.Body = append(p.Body, StringToBytes(s)...)
+	}
+}
+
+// WithInt4 writes v as 4 bytes to the packet
+func WithInt4(v int) func(*Packet) {
+	return func(p *Packet) {
+		p.Body = binary.BigEndian.AppendUint32(p.Body, uint32(v))
+	}
+}
+
+// WithLong writes v as 8 bytes to the packet
+func WithLong(v int) func(*Packet) {
+	return func(p *Packet) {
+		//p.Body = append(p.Body, 0, 0, 0, 0)
+		p.Body = binary.BigEndian.AppendUint64(p.Body, uint64(v))
+	}
+}
