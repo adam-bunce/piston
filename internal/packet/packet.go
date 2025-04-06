@@ -1,17 +1,9 @@
 package packet
 
-import "encoding/binary"
-
-//type Packet interface {
-//	Type()
-//	Size() uint64
-//	Serialize() []byte
-//}
-
-/*
-for server bound packet parsing I need to read
-the first byte (packet_id), then hand the byte stream off to that particular parser
-*/
+import (
+	"encoding/binary"
+	"math"
+)
 
 type ID byte
 
@@ -35,22 +27,9 @@ var IDToName = map[ID]string{
 	ChatMessage:           "Chat Message",
 }
 
-// build/options pattern for creating packets
-/*
-p := packet.newPacket(
-	packet.withId(packet.Handshake)
-	packet.withString("_4dam") -> adds uint16, little endian to end of packet position
-)
-
-*/
-
-// pretty print packet to do decode and encode tests
-
 // something similar to 8086_sim to convert bytes to usable objects would be good
 // except packet id give it away so easier
 // describe packet shape, get out packet struct (or map? idk)
-
-// GOAL 1: two users connect, can send chat messages (no blocks or anything else)
 
 type Packet struct {
 	Body []byte
@@ -107,7 +86,14 @@ func WithLong(v int) func(*Packet) {
 // WithDouble writes v as 8 bytes to the packet
 func WithDouble(v float64) func(*Packet) {
 	return func(p *Packet) {
-		p.Body = binary.BigEndian.AppendUint64(p.Body, uint64(v))
+		p.Body = binary.BigEndian.AppendUint64(p.Body, math.Float64bits(v))
+	}
+}
+
+// WithFloat writes v as 4 bytes to the packet
+func WithFloat(v float32) func(*Packet) {
+	return func(p *Packet) {
+		p.Body = binary.BigEndian.AppendUint32(p.Body, math.Float32bits(v))
 	}
 }
 
