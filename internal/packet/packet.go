@@ -22,6 +22,7 @@ const (
 	PlayerPosition           = 0x0B
 	PlayerLook               = 0x0C
 	PlayerPositionAndLook    = 0x0D
+	ChatMessage              = 0x03
 )
 
 var IDToName = map[ID]string{
@@ -31,6 +32,7 @@ var IDToName = map[ID]string{
 	PlayerPosition:        "Player Position",
 	PlayerLook:            "Player Look",
 	PlayerPositionAndLook: "Player Position and Look",
+	ChatMessage:           "Chat Message",
 }
 
 // build/options pattern for creating packets
@@ -99,5 +101,23 @@ func WithLong(v int) func(*Packet) {
 	return func(p *Packet) {
 		//p.Body = append(p.Body, 0, 0, 0, 0)
 		p.Body = binary.BigEndian.AppendUint64(p.Body, uint64(v))
+	}
+}
+
+// WithDouble writes v as 8 bytes to the packet
+func WithDouble(v float64) func(*Packet) {
+	return func(p *Packet) {
+		p.Body = binary.BigEndian.AppendUint64(p.Body, uint64(v))
+	}
+}
+
+// WithBool writes v as 1 byte to the packet
+func WithBool(v bool) func(*Packet) {
+	return func(p *Packet) {
+		if v {
+			p.Body = append(p.Body, 0b1)
+		} else {
+			p.Body = append(p.Body, 0b0)
+		}
 	}
 }
